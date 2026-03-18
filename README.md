@@ -59,19 +59,29 @@ Each agent is responsible for a specific role, enabling more structured and reli
 4. Reviewer Agent checks for clarity, gaps, and issues  
 5. Final Response Agent produces a clean user-facing answer  
 
+## Demo
+
+Example run of the multi-agent system:
+
+![Demo Output](assets/demo.png)
+
+## Architecture
+
+Planner → Research (Tool) → Analyst → Reviewer → Final Response
 ---
 
 ## Project Structure
-app/
-├── agents.py
-├── config.py
-├── logging_config.py
-├── model_client.py
-├── orchestrator_runner.py
-├── planner_runner.py
-├── schemas.py
-├── tools/
-│ └── stock_tool.py
+
+- app/
+  - agents.py
+  - config.py
+  - logging_config.py
+  - model_client.py
+  - orchestrator_runner.py
+  - planner_runner.py
+  - schemas.py
+  - tools/
+    - stock_tool.py
 
 ---
 
