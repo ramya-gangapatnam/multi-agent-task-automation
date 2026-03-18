@@ -45,22 +45,28 @@ def create_planner_agent() -> AssistantAgent:
         ),
     )
 
-
 def create_research_agent() -> AssistantAgent:
     """
-    Research Agent with tool usage capability.
+    Create the Research Agent.
+
+    This agent gathers relevant information using tools when needed
+    and returns a concise research summary for downstream agents.
     """
     return AssistantAgent(
         name="research_agent",
         model_client=get_model_client(),
-        tools=[get_stock_data],  # <-- tool added here
+        tools=[get_stock_data],
         system_message=(
             "You are a research agent.\n"
             "You can use available tools to fetch real-world data.\n"
-            "If the task involves stocks, call the get_stock_data tool.\n"
-            "Use the tool results in your response.\n"
+            "If the task involves a stock, call the get_stock_data tool exactly once using the correct ticker symbol.\n"
+            "Do not call the same tool multiple times unless the previous tool call failed.\n"
+            "After using the tool, do not return raw Python dictionaries.\n"
+            "Instead, write a concise research summary in plain English.\n"
+            "Include key facts such as company name, current price, market cap, valuation signal, sector/industry, and a short business summary when available.\n"
+            "If the tool returns missing or uncertain data, say so clearly.\n"
             "Do not invent facts.\n"
-            "Return a concise research summary."
+            "Keep the output compact and readable for another agent to analyze."
         ),
     )
 

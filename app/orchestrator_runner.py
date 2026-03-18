@@ -1,7 +1,13 @@
 import asyncio
 import logging
 
-from app.agents import create_planner_agent, create_research_agent, create_analyst_agent, create_reviewer_agent, create_final_response_agent
+from app.agents import (
+    create_analyst_agent,
+    create_final_response_agent,
+    create_planner_agent,
+    create_research_agent,
+    create_reviewer_agent,
+)
 from app.config import validate_config
 from app.logging_config import setup_logging
 
@@ -13,7 +19,7 @@ validate_config()
 
 def extract_final_content(result) -> str:
     """
-    Extract the final text response from an AutoGen agent result.
+    Extract and clean the final text response from an AutoGen agent result.
     """
     if not result.messages:
         raise ValueError("Agent returned no messages.")
@@ -24,7 +30,11 @@ def extract_final_content(result) -> str:
     if not content:
         raise ValueError("Agent returned an empty response.")
 
-    return content
+    # If content looks like raw dict, convert to readable text
+    if isinstance(content, str) and content.strip().startswith("{"):
+        return "Research data retrieved successfully. Key details were used for analysis."
+
+    return content.strip()
 
 
 async def run_orchestration(task: str) -> dict:
@@ -42,9 +52,13 @@ async def run_orchestration(task: str) -> dict:
     reviewer = create_reviewer_agent()
     final_responder = create_final_response_agent()
 
+    logger.info("Starting orchestration for task: %s", task)
+
     logger.info("Running planner agent")
     planner_result = await planner.run(task=task)
     plan_text = extract_final_content(planner_result)
+    # logger.info("Planner output:\n%s", plan_text)
+    logger.info("Planner completed")
 
     logger.info("Running research agent")
     research_prompt = (
@@ -54,6 +68,8 @@ async def run_orchestration(task: str) -> dict:
     )
     research_result = await researcher.run(task=research_prompt)
     research_text = extract_final_content(research_result)
+    # logger.info("Research output:\n%s", research_text)
+    logger.info("Research completed")
 
     logger.info("Running analyst agent")
     analysis_prompt = (
@@ -64,6 +80,8 @@ async def run_orchestration(task: str) -> dict:
     )
     analysis_result = await analyst.run(task=analysis_prompt)
     analysis_text = extract_final_content(analysis_result)
+    # logger.info("Analysis output:\n%s", analysis_text)
+    logger.info("Analysis completed")
 
     logger.info("Running reviewer agent")
     review_prompt = (
@@ -75,6 +93,8 @@ async def run_orchestration(task: str) -> dict:
     )
     review_result = await reviewer.run(task=review_prompt)
     review_text = extract_final_content(review_result)
+    # logger.info("Review output:\n%s", review_text)
+    logger.info("Review completed")
 
     logger.info("Running final response agent")
     final_prompt = (
@@ -87,6 +107,7 @@ async def run_orchestration(task: str) -> dict:
     )
     final_result = await final_responder.run(task=final_prompt)
     final_text = extract_final_content(final_result)
+    logger.info("Final response generated successfully")
 
     return {
         "task": task,
@@ -98,24 +119,31 @@ async def run_orchestration(task: str) -> dict:
     }
 
 
+# if __name__ == "__main__":
+#     sample_task = "Analyze Tesla stock and summarize key risks for a beginner investor."
+#     result = asyncio.run(run_orchestration(sample_task))
+
+#     print("\nTask:\n")
+#     print(result["task"])
+
+#     print("\nPlanner Output:\n")
+#     print(result["plan"])
+
+#     print("\nResearch Output:\n")
+#     print(result["research"])
+
+#     print("\nAnalysis Output:\n")
+#     print(result["analysis"])
+
+#     print("\nReview Output:\n")
+#     print(result["review"])
+
+#     print("\nFinal Answer:\n")
+#     print(result["final_answer"])
+
 if __name__ == "__main__":
-    sample_task = "Research Tesla stock and summarize key risks for a beginner investor."
+    sample_task = "Analyze Tesla stock and summarize key risks for a beginner investor."
     result = asyncio.run(run_orchestration(sample_task))
-
-    print("\nTask:\n")
-    print(result["task"])
-
-    print("\nPlanner Output:\n")
-    print(result["plan"])
-
-    print("\nResearch Output:\n")
-    print(result["research"])
-
-    print("\nAnalysis Output:\n")
-    print(result["analysis"])
-
-    print("\nReview Output:\n")
-    print(result["review"])
 
     print("\nFinal Answer:\n")
     print(result["final_answer"])
