@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from app.agents import create_planner_agent, create_research_agent, create_analyst_agent
+from app.agents import create_planner_agent, create_research_agent, create_analyst_agent, create_reviewer_agent
 from app.config import validate_config
 from app.logging_config import setup_logging
 
@@ -29,14 +29,16 @@ def extract_final_content(result) -> str:
 
 async def run_orchestration(task: str) -> dict:
     """
-    Run a basic three-agent orchestration:
+    Run a four-agent orchestration:
     1. Planner agent creates a plan
-    2. Research agent uses the plan to produce a research summary
-    3. Analyst agent interprets the research and produces a structured analysis
+    2. Research agent produces a research summary
+    3. Analyst agent interprets the research
+    4. Reviewer agent checks the analysis for quality and gaps
     """
     planner = create_planner_agent()
     researcher = create_research_agent()
     analyst = create_analyst_agent()
+    reviewer = create_reviewer_agent()
 
     logger.info("Running planner agent")
     planner_result = await planner.run(task=task)
@@ -61,11 +63,23 @@ async def run_orchestration(task: str) -> dict:
     analysis_result = await analyst.run(task=analysis_prompt)
     analysis_text = extract_final_content(analysis_result)
 
+    logger.info("Running reviewer agent")
+    review_prompt = (
+        f"User task:\n{task}\n\n"
+        f"Planner output:\n{plan_text}\n\n"
+        f"Research summary:\n{research_text}\n\n"
+        f"Analysis output:\n{analysis_text}\n\n"
+        "Review this analysis for clarity, completeness, unsupported claims, and missing risks."
+    )
+    review_result = await reviewer.run(task=review_prompt)
+    review_text = extract_final_content(review_result)
+
     return {
         "task": task,
         "plan": plan_text,
         "research": research_text,
         "analysis": analysis_text,
+        "review": review_text,
     }
 
 
@@ -84,3 +98,6 @@ if __name__ == "__main__":
 
     print("\nAnalysis Output:\n")
     print(result["analysis"])
+
+    print("\nReview Output:\n")
+    print(result["review"])

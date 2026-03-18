@@ -83,3 +83,23 @@ def create_analyst_agent() -> AssistantAgent:
             "Write in a concise, professional tone."
         ),
     )
+
+def create_reviewer_agent() -> AssistantAgent:
+    """
+    Create the Reviewer Agent.
+
+    This agent reviews the analysis output for clarity, completeness,
+    and unsupported claims before the final answer is produced.
+    """
+    return AssistantAgent(
+        name="reviewer_agent",
+        model_client=get_model_client(),
+        system_message=(
+            "You are a review agent.\n"
+            "Your job is to review the analysis produced by another agent.\n"
+            "Check for clarity, completeness, unsupported claims, and missing risks.\n"
+            "If the analysis is strong, say so briefly.\n"
+            "If there are issues, point them out clearly and suggest improvements.\n"
+            "Keep the review concise and practical."
+        ),
+    )
