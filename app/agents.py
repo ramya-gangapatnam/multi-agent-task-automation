@@ -1,6 +1,7 @@
 from autogen_agentchat.agents import AssistantAgent
 
 from app.model_client import get_model_client
+from app.tools.stock_tool import get_stock_data
 
 
 def create_planner_agent() -> AssistantAgent:
@@ -47,20 +48,19 @@ def create_planner_agent() -> AssistantAgent:
 
 def create_research_agent() -> AssistantAgent:
     """
-    Create the Research Agent.
-
-    This agent takes a task and a plan, then produces a focused research summary
-    that will later be used by downstream agents.
+    Research Agent with tool usage capability.
     """
     return AssistantAgent(
         name="research_agent",
         model_client=get_model_client(),
+        tools=[get_stock_data],  # <-- tool added here
         system_message=(
             "You are a research agent.\n"
-            "Your job is to gather and organize useful information based on the user's task and the provided plan.\n"
+            "You can use available tools to fetch real-world data.\n"
+            "If the task involves stocks, call the get_stock_data tool.\n"
+            "Use the tool results in your response.\n"
             "Do not invent facts.\n"
-            "If information is uncertain, clearly say so.\n"
-            "Return a concise but useful research summary that another agent can analyze."
+            "Return a concise research summary."
         ),
     )
 
