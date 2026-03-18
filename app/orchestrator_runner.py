@@ -1,0 +1,70 @@
+import asyncio
+import logging
+
+from app.agents import create_planner_agent, create_research_agent
+from app.config import validate_config
+from app.logging_config import setup_logging
+
+
+setup_logging()
+logger = logging.getLogger(__name__)
+validate_config()
+
+
+def extract_final_content(result) -> str:
+    """
+    Extract the final text response from an AutoGen agent result.
+    """
+    if not result.messages:
+        raise ValueError("Agent returned no messages.")
+
+    final_message = result.messages[-1]
+    content = getattr(final_message, "content", None)
+
+    if not content:
+        raise ValueError("Agent returned an empty response.")
+
+    return content
+
+
+async def run_orchestration(task: str) -> dict:
+    """
+    Run a basic two-agent orchestration:
+    1. Planner agent creates a plan
+    2. Research agent uses the plan to produce a research summary
+    """
+    planner = create_planner_agent()
+    researcher = create_research_agent()
+
+    logger.info("Running planner agent")
+    planner_result = await planner.run(task=task)
+    plan_text = extract_final_content(planner_result)
+
+    logger.info("Running research agent")
+    research_prompt = (
+        f"User task:\n{task}\n\n"
+        f"Planner output:\n{plan_text}\n\n"
+        "Produce a concise research summary based on this plan."
+    )
+    research_result = await researcher.run(task=research_prompt)
+    research_text = extract_final_content(research_result)
+
+    return {
+        "task": task,
+        "plan": plan_text,
+        "research": research_text,
+    }
+
+
+if __name__ == "__main__":
+    sample_task = "Research Tesla stock and summarize key risks for a beginner investor."
+    result = asyncio.run(run_orchestration(sample_task))
+
+    print("\nTask:\n")
+    print(result["task"])
+
+    print("\nPlanner Output:\n")
+    print(result["plan"])
+
+    print("\nResearch Output:\n")
+    print(result["research"])
