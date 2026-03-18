@@ -73,7 +73,6 @@ app/
 ├── tools/
 │ └── stock_tool.py
 
-
 ---
 
 ## Key Features
@@ -108,19 +107,19 @@ Output:
 
 ## How to Run
 
-1. Create virtual environment
+1. Create virtual environment:
 python -m venv venv
 venv\Scripts\activate
 
-2. Install dependencies
+2. Install dependencies:
 pip install -r requirements.txt
 
-3. Add environment variables
+3. Add environment variables:
 Create .env:
 OPENAI_API_KEY=your_key_here
 MODEL_NAME=gpt-4.1-mini
 
-4. Run the system
+4. Run the system:
 python -m app.orchestrator_runner
 
 Possible Improvements:
