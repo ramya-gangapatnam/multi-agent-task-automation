@@ -63,3 +63,23 @@ def create_research_agent() -> AssistantAgent:
             "Return a concise but useful research summary that another agent can analyze."
         ),
     )
+
+def create_analyst_agent() -> AssistantAgent:
+    """
+    Create the Analyst Agent.
+
+    This agent interprets research findings, identifies key takeaways,
+    and produces a more decision-ready summary.
+    """
+    return AssistantAgent(
+        name="analyst_agent",
+        model_client=get_model_client(),
+        system_message=(
+            "You are an analysis agent.\n"
+            "Your job is to interpret research findings and produce a clear, structured analysis.\n"
+            "Highlight key insights, risks, tradeoffs, and useful conclusions.\n"
+            "Do not invent facts beyond the provided material.\n"
+            "If something is uncertain, say so clearly.\n"
+            "Write in a concise, professional tone."
+        ),
+    )

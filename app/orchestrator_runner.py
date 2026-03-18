@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from app.agents import create_planner_agent, create_research_agent
+from app.agents import create_planner_agent, create_research_agent, create_analyst_agent
 from app.config import validate_config
 from app.logging_config import setup_logging
 
@@ -29,12 +29,14 @@ def extract_final_content(result) -> str:
 
 async def run_orchestration(task: str) -> dict:
     """
-    Run a basic two-agent orchestration:
+    Run a basic three-agent orchestration:
     1. Planner agent creates a plan
     2. Research agent uses the plan to produce a research summary
+    3. Analyst agent interprets the research and produces a structured analysis
     """
     planner = create_planner_agent()
     researcher = create_research_agent()
+    analyst = create_analyst_agent()
 
     logger.info("Running planner agent")
     planner_result = await planner.run(task=task)
@@ -49,10 +51,21 @@ async def run_orchestration(task: str) -> dict:
     research_result = await researcher.run(task=research_prompt)
     research_text = extract_final_content(research_result)
 
+    logger.info("Running analyst agent")
+    analysis_prompt = (
+        f"User task:\n{task}\n\n"
+        f"Planner output:\n{plan_text}\n\n"
+        f"Research summary:\n{research_text}\n\n"
+        "Produce a structured analysis with key insights, important risks, and a concise conclusion."
+    )
+    analysis_result = await analyst.run(task=analysis_prompt)
+    analysis_text = extract_final_content(analysis_result)
+
     return {
         "task": task,
         "plan": plan_text,
         "research": research_text,
+        "analysis": analysis_text,
     }
 
 
@@ -68,3 +81,6 @@ if __name__ == "__main__":
 
     print("\nResearch Output:\n")
     print(result["research"])
+
+    print("\nAnalysis Output:\n")
+    print(result["analysis"])
