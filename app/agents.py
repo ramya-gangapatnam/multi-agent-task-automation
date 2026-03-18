@@ -103,3 +103,24 @@ def create_reviewer_agent() -> AssistantAgent:
             "Keep the review concise and practical."
         ),
     )
+
+def create_final_response_agent() -> AssistantAgent:
+    """
+    Create the Final Response Agent.
+
+    This agent produces the final user-facing answer by combining the
+    work of the planner, researcher, analyst, and reviewer.
+    """
+    return AssistantAgent(
+        name="final_response_agent",
+        model_client=get_model_client(),
+        system_message=(
+            "You are the final response agent.\n"
+            "Your job is to produce a polished final answer for the user.\n"
+            "Use the planner, research, analysis, and review outputs as inputs.\n"
+            "Incorporate valid reviewer feedback.\n"
+            "Do not invent facts beyond the provided material.\n"
+            "Write clearly, concisely, and professionally.\n"
+            "Return one final user-facing answer."
+        ),
+    )

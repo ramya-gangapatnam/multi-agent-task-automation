@@ -1,7 +1,7 @@
 import asyncio
 import logging
 
-from app.agents import create_planner_agent, create_research_agent, create_analyst_agent, create_reviewer_agent
+from app.agents import create_planner_agent, create_research_agent, create_analyst_agent, create_reviewer_agent, create_final_response_agent
 from app.config import validate_config
 from app.logging_config import setup_logging
 
@@ -29,16 +29,18 @@ def extract_final_content(result) -> str:
 
 async def run_orchestration(task: str) -> dict:
     """
-    Run a four-agent orchestration:
+    Run a five-agent orchestration:
     1. Planner agent creates a plan
     2. Research agent produces a research summary
     3. Analyst agent interprets the research
     4. Reviewer agent checks the analysis for quality and gaps
+    5. Final response agent produces the final user-facing answer
     """
     planner = create_planner_agent()
     researcher = create_research_agent()
     analyst = create_analyst_agent()
     reviewer = create_reviewer_agent()
+    final_responder = create_final_response_agent()
 
     logger.info("Running planner agent")
     planner_result = await planner.run(task=task)
@@ -74,12 +76,25 @@ async def run_orchestration(task: str) -> dict:
     review_result = await reviewer.run(task=review_prompt)
     review_text = extract_final_content(review_result)
 
+    logger.info("Running final response agent")
+    final_prompt = (
+        f"User task:\n{task}\n\n"
+        f"Planner output:\n{plan_text}\n\n"
+        f"Research summary:\n{research_text}\n\n"
+        f"Analysis output:\n{analysis_text}\n\n"
+        f"Reviewer feedback:\n{review_text}\n\n"
+        "Produce the final user-facing answer."
+    )
+    final_result = await final_responder.run(task=final_prompt)
+    final_text = extract_final_content(final_result)
+
     return {
         "task": task,
         "plan": plan_text,
         "research": research_text,
         "analysis": analysis_text,
         "review": review_text,
+        "final_answer": final_text,
     }
 
 
@@ -101,3 +116,6 @@ if __name__ == "__main__":
 
     print("\nReview Output:\n")
     print(result["review"])
+
+    print("\nFinal Answer:\n")
+    print(result["final_answer"])
